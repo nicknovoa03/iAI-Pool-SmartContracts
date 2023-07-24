@@ -26,6 +26,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
 
   struct Pool {
     uint256 amount;
+    uint256 apr;
     uint256 timestamp;
     string poolType;
   }
@@ -148,30 +149,41 @@ contract iAIPool is ReentrancyGuard, Ownable {
   function pool1(uint256 _amount) public {
     require(_amount >= tokenThresholdPool1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= tokenThresholdPool1, 'Insufficient $iAI balance');
+    require(nft.balanceOf(msg.sender) >= nftThresholdPool1, 'Insufficient 9022 balance');
+
     string memory poolType = 'Pool 1';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    pools[msg.sender].push(Pool(_amount, apr1, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
   function pool2(uint256 _amount) public {
     require(_amount >= tokenThresholdPool2, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= tokenThresholdPool2, 'Insufficient $iAI balance');
+    require(nft.balanceOf(msg.sender) >= nftThresholdPool2, 'Insufficient 9022 balance');
+
     string memory poolType = 'Pool 2';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    pools[msg.sender].push(Pool(_amount, apr2, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
   function pool3(uint256 _amount) public {
     require(_amount >= tokenThresholdPool3, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= tokenThresholdPool3, 'Insufficient $iAI balance');
+    require(nft.balanceOf(msg.sender) >= nftThresholdPool3, 'Insufficient 9022 balance');
+
+    uint256 nftCount = nft.balanceOf(msg.sender);
+    uint256 dynamicApr = apr3 + (50 * (nftCount - nftThresholdPool3));
+    if (dynamicApr > 900) {
+      dynamicApr = 900;
+    }
     string memory poolType = 'Pool 3';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    pools[msg.sender].push(Pool(_amount, dynamicApr, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -181,7 +193,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     string memory poolType = 'Pool Prestige';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    pools[msg.sender].push(Pool(_amount, aprPrestige, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -191,7 +203,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     string memory poolType = 'Pool Destination Inheritance';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    pools[msg.sender].push(Pool(_amount, aprDI, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
