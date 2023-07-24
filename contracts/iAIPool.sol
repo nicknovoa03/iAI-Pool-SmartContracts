@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+// Enable optimizer with a low runs value
+// The optimizer runs a maximum of 200 times (you can adjust the value if needed)
+pragma solidity ^0.8.4 ^0.8.4;
+
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
@@ -11,6 +15,8 @@ interface IiAI {
 
   function balanceOf(address account) external view returns (uint256);
 }
+
+
 
 interface I9022 {
   function transfer(address to, uint256 amount) external returns (bool);
@@ -57,8 +63,18 @@ contract iAIPool is ReentrancyGuard, Ownable {
 
   uint256 public withdrawPenalty = 25;
 
-  mapping(address => Pool[]) private pools;
-  mapping(address => uint256) private poolingBalance;
+  mapping(address => Pool[]) private pool1Data;
+  mapping(address => Pool[]) private pool2Data;
+  mapping(address => Pool[]) private pool3Data;
+  mapping(address => Pool[]) private poolPrestigeData;
+  mapping(address => Pool[]) private poolDIData;
+
+  mapping(address => uint256) private pool1Balance;
+  mapping(address => uint256) private pool2Balance;
+  mapping(address => uint256) private pool3Balance;
+  mapping(address => uint256) private poolPrestigeBalance;
+  mapping(address => uint256) private poolDIBalance;
+
   mapping(address => uint256) private lastClaimTime;
 
   event Staked(address indexed from, uint256 amount, string pool);
@@ -126,20 +142,52 @@ contract iAIPool is ReentrancyGuard, Ownable {
     withdrawPenalty = _withdrawPenalty;
   }
 
-  function stakingbalance(address _staker) public view returns (uint256) {
-    return poolingBalance[_staker];
+  function poolBalance(address _address) public view returns (uint256) {
+    return pool1Balance[_address];
   }
 
-  function stakerdetails(address _staker, uint256 _index) public view returns (Pool memory) {
-    return pools[_staker][_index];
+  function pool1Detailed(address _address, uint256 _index) public view returns (Pool memory) {
+    return pool1Data[_address][_index];
   }
 
-  function lastclaimtime(address _staker) public view returns (uint256) {
-    return lastClaimTime[_staker];
+  function pool2Detailed(address _address, uint256 _index) public view returns (Pool memory) {
+    return pool2Data[_address][_index];
   }
 
-  function allStaked(address _staker) public view returns (Pool[] memory) {
-    return pools[_staker];
+  function pool3Detailed(address _address, uint256 _index) public view returns (Pool memory) {
+    return pool1Data[_address][_index];
+  }
+
+  function poolPrestigeDetailed(address _address, uint256 _index) public view returns (Pool memory) {
+    return poolPrestigeData[_address][_index];
+  }
+
+  function poolDIDetailed(address _address, uint256 _index) public view returns (Pool memory) {
+    return poolDIData[_address][_index];
+  }
+
+  function allPooled1(address _address) public view returns (Pool[] memory) {
+    return pool1Data[_address];
+  }
+
+  function allPooled2(address _address) public view returns (Pool[] memory) {
+    return pool2Data[_address];
+  }
+
+  function allPooled3(address _address) public view returns (Pool[] memory) {
+    return pool3Data[_address];
+  }
+
+  function allPooledPrestige(address _address) public view returns (Pool[] memory) {
+    return poolPrestigeData[_address];
+  }
+
+  function allPooledDI(address _address) public view returns (Pool[] memory) {
+    return poolDIData[_address];
+  }
+
+  function lastclaimtime(address _address) public view returns (uint256) {
+    return lastClaimTime[_address];
   }
 
   function widthdrawToken(address _address, uint256 _amount) public onlyOwner {
@@ -153,8 +201,8 @@ contract iAIPool is ReentrancyGuard, Ownable {
 
     string memory poolType = 'Pool 1';
     iAI.transferFrom(msg.sender, address(this), _amount);
-    poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, apr1, block.timestamp, poolType));
+    pool1Balance[msg.sender] += _amount;
+    pool1Data[msg.sender].push(Pool(_amount, apr1, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -165,8 +213,8 @@ contract iAIPool is ReentrancyGuard, Ownable {
 
     string memory poolType = 'Pool 2';
     iAI.transferFrom(msg.sender, address(this), _amount);
-    poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, apr2, block.timestamp, poolType));
+    pool2Balance[msg.sender] += _amount;
+    pool2Data[msg.sender].push(Pool(_amount, apr2, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -182,8 +230,8 @@ contract iAIPool is ReentrancyGuard, Ownable {
     }
     string memory poolType = 'Pool 3';
     iAI.transferFrom(msg.sender, address(this), _amount);
-    poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, dynamicApr, block.timestamp, poolType));
+    pool3Balance[msg.sender] += _amount;
+    pool3Data[msg.sender].push(Pool(_amount, dynamicApr, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -192,8 +240,8 @@ contract iAIPool is ReentrancyGuard, Ownable {
     require(iAI.balanceOf(msg.sender) >= tokenThresholdPrestige, 'Insufficient $iAI balance');
     string memory poolType = 'Pool Prestige';
     iAI.transferFrom(msg.sender, address(this), _amount);
-    poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, aprPrestige, block.timestamp, poolType));
+    poolPrestigeBalance[msg.sender] += _amount;
+    poolPrestigeData[msg.sender].push(Pool(_amount, aprPrestige, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
@@ -202,57 +250,229 @@ contract iAIPool is ReentrancyGuard, Ownable {
     require(iAI.balanceOf(msg.sender) >= tokenThresholdDI, 'Insufficient $iAI balance');
     string memory poolType = 'Pool Destination Inheritance';
     iAI.transferFrom(msg.sender, address(this), _amount);
-    poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, aprDI, block.timestamp, poolType));
+    poolDIBalance[msg.sender] += _amount;
+    poolDIData[msg.sender].push(Pool(_amount, aprDI, block.timestamp, poolType));
     emit Staked(msg.sender, _amount, poolType);
   }
 
-  function unstake(uint256 _index) public nonReentrant {
-    require(pools[msg.sender].length > 0, 'No stakes found for the address');
-    require(pools[msg.sender].length >= _index + 1, 'Stake does not exist');
+  function unpool1(uint256 _index) public nonReentrant {
+    require(pool1Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool1Data[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = stakingBalance[msg.sender];
     uint256 lastStakeIndex = _index;
-    Pool memory lastStake = pools[msg.sender][lastStakeIndex];
+    Pool memory lastStake = pool1Data[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     require(timeStaked >= minPeriodPool1, 'Minimum staking period not reached');
     uint256 latestStake = lastStake.amount;
     uint256 reward = (latestStake * 1) / 10000;
     uint256 payout = latestStake + reward;
     // Remove the stake at the given index
-    for (uint256 i = _index; i < pools[msg.sender].length - 1; i++) {
-      pools[msg.sender][i] = pools[msg.sender][i + 1];
+    for (uint256 i = _index; i < pool1Data[msg.sender].length - 1; i++) {
+      pool1Data[msg.sender][i] = pool1Data[msg.sender][i + 1];
     }
-    pools[msg.sender].pop();
-    poolingBalance[msg.sender] -= latestStake;
+    pool1Data[msg.sender].pop();
+    pool1Balance[msg.sender] -= latestStake;
     lastClaimTime[msg.sender] = block.timestamp;
     iAI.transfer(msg.sender, payout);
     emit Unstaked(msg.sender, payout, timeStaked);
   }
 
-  function withdrawpenalty(uint256 _index) public nonReentrant {
-    require(pools[msg.sender].length > 0, 'No stakes found for the address');
-    require(pools[msg.sender].length >= _index + 1, 'Stake does not exist');
+  function unpool2(uint256 _index) public nonReentrant {
+    require(pool2Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool2Data[msg.sender].length >= _index + 1, 'Stake does not exist');
+    // uint256 totalStaked = stakingBalance[msg.sender];
     uint256 lastStakeIndex = _index;
-    Pool memory lastStake = pools[msg.sender][lastStakeIndex];
+    Pool memory lastStake = pool2Data[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    require(timeStaked >= minPeriodPool2, 'Minimum staking period not reached');
+    uint256 latestStake = lastStake.amount;
+    uint256 reward = (latestStake * 1) / 10000;
+    uint256 payout = latestStake + reward;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < pool2Data[msg.sender].length - 1; i++) {
+      pool2Data[msg.sender][i] = pool2Data[msg.sender][i + 1];
+    }
+    pool2Data[msg.sender].pop();
+    pool2Balance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    iAI.transfer(msg.sender, payout);
+    emit Unstaked(msg.sender, payout, timeStaked);
+  }
+
+  function unpool3(uint256 _index) public nonReentrant {
+    require(pool3Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool3Data[msg.sender].length >= _index + 1, 'Stake does not exist');
+    // uint256 totalStaked = stakingBalance[msg.sender];
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = pool3Data[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    require(timeStaked >= minPeriodPool3, 'Minimum staking period not reached');
+    uint256 latestStake = lastStake.amount;
+    uint256 reward = (latestStake * 1) / 10000;
+    uint256 payout = latestStake + reward;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < pool3Data[msg.sender].length - 1; i++) {
+      pool3Data[msg.sender][i] = pool3Data[msg.sender][i + 1];
+    }
+    pool3Data[msg.sender].pop();
+    pool3Balance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    iAI.transfer(msg.sender, payout);
+    emit Unstaked(msg.sender, payout, timeStaked);
+  }
+
+  function unpoolPrestige(uint256 _index) public nonReentrant {
+    require(poolPrestigeData[msg.sender].length > 0, 'No stakes found for the address');
+    require(poolPrestigeData[msg.sender].length >= _index + 1, 'Stake does not exist');
+    // uint256 totalStaked = stakingBalance[msg.sender];
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = poolPrestigeData[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    require(timeStaked >= minPeriodPrestige, 'Minimum staking period not reached');
+    uint256 latestStake = lastStake.amount;
+    uint256 reward = (latestStake * 1) / 10000;
+    uint256 payout = latestStake + reward;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < poolPrestigeData[msg.sender].length - 1; i++) {
+      poolPrestigeData[msg.sender][i] = poolPrestigeData[msg.sender][i + 1];
+    }
+    poolPrestigeData[msg.sender].pop();
+    poolPrestigeBalance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    iAI.transfer(msg.sender, payout);
+    emit Unstaked(msg.sender, payout, timeStaked);
+  }
+
+  function unpoolDI(uint256 _index) public nonReentrant {
+    require(poolDIData[msg.sender].length > 0, 'No stakes found for the address');
+    require(poolDIData[msg.sender].length >= _index + 1, 'Stake does not exist');
+    // uint256 totalStaked = stakingBalance[msg.sender];
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = poolDIData[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    require(timeStaked >= minPeriodDI, 'Minimum staking period not reached');
+    uint256 latestStake = lastStake.amount;
+    uint256 reward = (latestStake * 1) / 10000;
+    uint256 payout = latestStake + reward;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < poolDIData[msg.sender].length - 1; i++) {
+      poolDIData[msg.sender][i] = poolDIData[msg.sender][i + 1];
+    }
+    poolDIData[msg.sender].pop();
+    poolDIBalance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    iAI.transfer(msg.sender, payout);
+    emit Unstaked(msg.sender, payout, timeStaked);
+  }
+
+  function withdrawPool1(uint256 _index) public nonReentrant {
+    require(pool1Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool1Data[msg.sender].length >= _index + 1, 'Stake does not exist');
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = pool1Data[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     uint256 latestStake = lastStake.amount;
     require(timeStaked <= minPeriodPool1, 'Withdraw with penalty time exceed you can now unstake token ');
     uint256 penalty = (latestStake * withdrawPenalty) / 100;
     // Remove the stake at the given index
-    for (uint256 i = _index; i < pools[msg.sender].length - 1; i++) {
-      pools[msg.sender][i] = pools[msg.sender][i + 1];
+    for (uint256 i = _index; i < pool1Data[msg.sender].length - 1; i++) {
+      pool1Data[msg.sender][i] = pool1Data[msg.sender][i + 1];
     }
-    pools[msg.sender].pop();
-    poolingBalance[msg.sender] -= latestStake;
+    pool1Data[msg.sender].pop();
+    pool1Balance[msg.sender] -= latestStake;
     lastClaimTime[msg.sender] = block.timestamp;
     uint256 payout = latestStake - penalty;
     iAI.transfer(msg.sender, payout);
     emit Penalty(msg.sender, payout);
   }
 
-  function claimReward() public nonReentrant {
-    require(pools[msg.sender].length > 0, 'No stakes found for the address');
-    uint256 totalStaked = poolingBalance[msg.sender];
+  function withdrawPool2(uint256 _index) public nonReentrant {
+    require(pool2Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool2Data[msg.sender].length >= _index + 1, 'Stake does not exist');
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = pool2Data[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    uint256 latestStake = lastStake.amount;
+    require(timeStaked <= minPeriodPool2, 'Withdraw with penalty time exceed you can now unstake token ');
+    uint256 penalty = (latestStake * withdrawPenalty) / 100;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < pool2Data[msg.sender].length - 1; i++) {
+      pool2Data[msg.sender][i] = pool2Data[msg.sender][i + 1];
+    }
+    pool2Data[msg.sender].pop();
+    pool2Balance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    uint256 payout = latestStake - penalty;
+    iAI.transfer(msg.sender, payout);
+    emit Penalty(msg.sender, payout);
+  }
+
+  function withdrawPool3(uint256 _index) public nonReentrant {
+    require(pool3Data[msg.sender].length > 0, 'No stakes found for the address');
+    require(pool3Data[msg.sender].length >= _index + 1, 'Stake does not exist');
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = pool3Data[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    uint256 latestStake = lastStake.amount;
+    require(timeStaked <= minPeriodPool3, 'Withdraw with penalty time exceed you can now unstake token ');
+    uint256 penalty = (latestStake * withdrawPenalty) / 100;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < pool3Data[msg.sender].length - 1; i++) {
+      pool3Data[msg.sender][i] = pool3Data[msg.sender][i + 1];
+    }
+    pool3Data[msg.sender].pop();
+    pool3Balance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    uint256 payout = latestStake - penalty;
+    iAI.transfer(msg.sender, payout);
+    emit Penalty(msg.sender, payout);
+  }
+
+  function withdrawPrestige(uint256 _index) public nonReentrant {
+    require(poolPrestigeData[msg.sender].length > 0, 'No stakes found for the address');
+    require(poolPrestigeData[msg.sender].length >= _index + 1, 'Stake does not exist');
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = poolPrestigeData[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    uint256 latestStake = lastStake.amount;
+    require(timeStaked <= minPeriodPrestige, 'Withdraw with penalty time exceed you can now unstake token ');
+    uint256 penalty = (latestStake * withdrawPenalty) / 100;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < poolPrestigeData[msg.sender].length - 1; i++) {
+      poolPrestigeData[msg.sender][i] = poolPrestigeData[msg.sender][i + 1];
+    }
+    poolPrestigeData[msg.sender].pop();
+    poolPrestigeBalance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    uint256 payout = latestStake - penalty;
+    iAI.transfer(msg.sender, payout);
+    emit Penalty(msg.sender, payout);
+  }
+
+  function withdrawDI(uint256 _index) public nonReentrant {
+    require(poolDIData[msg.sender].length > 0, 'No stakes found for the address');
+    require(poolDIData[msg.sender].length >= _index + 1, 'Stake does not exist');
+    uint256 lastStakeIndex = _index;
+    Pool memory lastStake = poolDIData[msg.sender][lastStakeIndex];
+    uint256 timeStaked = block.timestamp - lastStake.timestamp;
+    uint256 latestStake = lastStake.amount;
+    require(timeStaked <= minPeriodDI, 'Withdraw with penalty time exceed you can now unstake token ');
+    uint256 penalty = (latestStake * withdrawPenalty) / 100;
+    // Remove the stake at the given index
+    for (uint256 i = _index; i < poolDIData[msg.sender].length - 1; i++) {
+      poolDIData[msg.sender][i] = poolDIData[msg.sender][i + 1];
+    }
+    poolDIData[msg.sender].pop();
+    poolDIBalance[msg.sender] -= latestStake;
+    lastClaimTime[msg.sender] = block.timestamp;
+    uint256 payout = latestStake - penalty;
+    iAI.transfer(msg.sender, payout);
+    emit Penalty(msg.sender, payout);
+  }
+
+  function claimRewardPool1() public nonReentrant {
+    require(pool1Data[msg.sender].length > 0, 'No stakes found for the address');
+    uint256 totalStaked = pool1Balance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
