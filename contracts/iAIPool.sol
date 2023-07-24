@@ -12,12 +12,22 @@ interface IiAI {
   function balanceOf(address account) external view returns (uint256);
 }
 
-contract iAIPool is ReentrancyGuard, Ownable {
-  IiAI public i9022;
+interface I9022 {
+  function transfer(address to, uint256 amount) external returns (bool);
 
-  struct Stake {
+  function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
+  function balanceOf(address account) external view returns (uint256);
+}
+
+contract iAIPool is ReentrancyGuard, Ownable {
+  IiAI public iAI;
+  I9022 public nft;
+
+  struct Pool {
     uint256 amount;
     uint256 timestamp;
+    string poolType;
   }
 
   uint256 public tokenThresholdPool1 = 10000;
@@ -46,17 +56,18 @@ contract iAIPool is ReentrancyGuard, Ownable {
 
   uint256 public withdrawPenalty = 25;
 
-  mapping(address => Stake[]) private stakes;
-  mapping(address => uint256) private stakingBalance;
+  mapping(address => Pool[]) private pools;
+  mapping(address => uint256) private poolingBalance;
   mapping(address => uint256) private lastClaimTime;
 
-  event Staked(address indexed from, uint256 amount);
-  event Unstaked(address indexed to, uint256 amount, uint256 stakingperiod);
+  event Staked(address indexed from, uint256 amount, string pool);
+  event Unstaked(address indexed to, uint256 amount, uint256 poolingperiod);
   event Penalty(address indexed to, uint256 amount);
   event RewardClaimed(address indexed to, uint256 amount);
 
-  constructor(address truthTokenAddress) Ownable() {
-    i9022 = IiAI(truthTokenAddress);
+  constructor(address iAITokenAddress, address nftTokenAddress) Ownable() {
+    iAI = IiAI(iAITokenAddress);
+    nft = I9022(nftTokenAddress);
   }
 
   function setARP1(uint256 _arp) external onlyOwner {
@@ -115,88 +126,88 @@ contract iAIPool is ReentrancyGuard, Ownable {
   }
 
   function stakingbalance(address _staker) public view returns (uint256) {
-    return stakingBalance[_staker];
+    return poolingBalance[_staker];
   }
 
-  function stakerdetails(address _staker, uint256 _index) public view returns (Stake memory) {
-    return stakes[_staker][_index];
+  function stakerdetails(address _staker, uint256 _index) public view returns (Pool memory) {
+    return pools[_staker][_index];
   }
 
   function lastclaimtime(address _staker) public view returns (uint256) {
     return lastClaimTime[_staker];
   }
 
-  function allStaked(address _staker) public view returns (Stake[] memory) {
-    return stakes[_staker];
+  function allStaked(address _staker) public view returns (Pool[] memory) {
+    return pools[_staker];
   }
 
-  function widthdrawTruth(address _address, uint256 _amount) public onlyOwner {
-    i9022.transfer(_address, _amount);
+  function widthdrawToken(address _address, uint256 _amount) public onlyOwner {
+    iAI.transfer(_address, _amount);
   }
 
-  function stake(uint256 _amount) public {
+  function pool1(uint256 _amount) public {
     require(_amount >= 1, "Amount can't be zero");
-    require(i9022.balanceOf(msg.sender) >= _amount, 'Insufficient $TRUTH balance');
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdPool1, 'Insufficient $TRUTH balance');
 
-    i9022.transferFrom(msg.sender, address(this), _amount);
-    stakingBalance[msg.sender] += _amount;
-    stakes[msg.sender].push(Stake(_amount, block.timestamp));
-    emit Staked(msg.sender, _amount);
+    iAI.transferFrom(msg.sender, address(this), _amount);
+    poolingBalance[msg.sender] += _amount;
+    pools[msg.sender].push(Pool(_amount, block.timestamp, 'Pool1'));
+    emit Staked(msg.sender, _amount, 'Pool1');
   }
 
   function unstake(uint256 _index) public nonReentrant {
-    require(stakes[msg.sender].length > 0, 'No stakes found for the address');
-    require(stakes[msg.sender].length >= _index + 1, 'Stake does not exist');
+    require(pools[msg.sender].length > 0, 'No stakes found for the address');
+    require(pools[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = stakingBalance[msg.sender];
     uint256 lastStakeIndex = _index;
-    Stake memory lastStake = stakes[msg.sender][lastStakeIndex];
+    Pool memory lastStake = pools[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     require(timeStaked >= minPeriodPool1, 'Minimum staking period not reached');
     uint256 latestStake = lastStake.amount;
     uint256 reward = (latestStake * 1) / 10000;
     uint256 payout = latestStake + reward;
     // Remove the stake at the given index
-    for (uint256 i = _index; i < stakes[msg.sender].length - 1; i++) {
-      stakes[msg.sender][i] = stakes[msg.sender][i + 1];
+    for (uint256 i = _index; i < pools[msg.sender].length - 1; i++) {
+      pools[msg.sender][i] = pools[msg.sender][i + 1];
     }
-    stakes[msg.sender].pop();
-    stakingBalance[msg.sender] -= latestStake;
+    pools[msg.sender].pop();
+    poolingBalance[msg.sender] -= latestStake;
     lastClaimTime[msg.sender] = block.timestamp;
-    i9022.transfer(msg.sender, payout);
+    iAI.transfer(msg.sender, payout);
     emit Unstaked(msg.sender, payout, timeStaked);
   }
 
   function withdrawpenalty(uint256 _index) public nonReentrant {
-    require(stakes[msg.sender].length > 0, 'No stakes found for the address');
-    require(stakes[msg.sender].length >= _index + 1, 'Stake does not exist');
+    require(pools[msg.sender].length > 0, 'No stakes found for the address');
+    require(pools[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
-    Stake memory lastStake = stakes[msg.sender][lastStakeIndex];
+    Pool memory lastStake = pools[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     uint256 latestStake = lastStake.amount;
     require(timeStaked <= minPeriodPool1, 'Withdraw with penalty time exceed you can now unstake token ');
     uint256 penalty = (latestStake * withdrawPenalty) / 100;
     // Remove the stake at the given index
-    for (uint256 i = _index; i < stakes[msg.sender].length - 1; i++) {
-      stakes[msg.sender][i] = stakes[msg.sender][i + 1];
+    for (uint256 i = _index; i < pools[msg.sender].length - 1; i++) {
+      pools[msg.sender][i] = pools[msg.sender][i + 1];
     }
-    stakes[msg.sender].pop();
-    stakingBalance[msg.sender] -= latestStake;
+    pools[msg.sender].pop();
+    poolingBalance[msg.sender] -= latestStake;
     lastClaimTime[msg.sender] = block.timestamp;
     uint256 payout = latestStake - penalty;
-    i9022.transfer(msg.sender, payout);
+    iAI.transfer(msg.sender, payout);
     emit Penalty(msg.sender, payout);
   }
 
   function claimReward() public nonReentrant {
-    require(stakes[msg.sender].length > 0, 'No stakes found for the address');
-    uint256 totalStaked = stakingBalance[msg.sender];
+    require(pools[msg.sender].length > 0, 'No stakes found for the address');
+    uint256 totalStaked = poolingBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
     uint256 reward = (totalStaked * (arp1 / 365) * (timeElapsed / 1 days)) / 100;
     require(reward > 0, 'Not Eligible for reward');
     lastClaimTime[msg.sender] = block.timestamp;
-    i9022.transfer(msg.sender, reward);
+    iAI.transfer(msg.sender, reward);
     emit RewardClaimed(msg.sender, reward);
   }
 }
