@@ -42,11 +42,11 @@ contract iAIPool is ReentrancyGuard, Ownable {
   uint256 public nftThresholdPrestige = 1;
   uint256 public nftThresholdDI = 1;
 
-  uint256 public arp1 = 200;
-  uint256 public arp2 = 200;
-  uint256 public arp3 = 550;
-  uint256 public arpPrestige = 1000;
-  uint256 public arpDI = 1200;
+  uint256 public apr1 = 200;
+  uint256 public apr2 = 200;
+  uint256 public apr3 = 550;
+  uint256 public aprPrestige = 1000;
+  uint256 public aprDI = 1200;
 
   uint256 public minPeriodPool1 = 182 days;
   uint256 public minPeriodPool2 = 182 days;
@@ -70,29 +70,29 @@ contract iAIPool is ReentrancyGuard, Ownable {
     nft = I9022(nftTokenAddress);
   }
 
-  function setARP1(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
-    arp1 = _arp;
+  function setARP1(uint256 _apr) external onlyOwner {
+    require(_apr > 0, "Amount cann't be zero");
+    apr1 = _apr;
   }
 
-  function setARP2(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
-    arp2 = _arp;
+  function setARP2(uint256 _apr) external onlyOwner {
+    require(_apr > 0, "Amount cann't be zero");
+    apr2 = _apr;
   }
 
-  function setARP3(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
-    arp3 = _arp;
+  function setARP3(uint256 _apr) external onlyOwner {
+    require(_apr > 0, "Amount cann't be zero");
+    apr3 = _apr;
   }
 
-  function setARPPrestige(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
-    arpPrestige = _arp;
+  function setARPPrestige(uint256 _apr) external onlyOwner {
+    require(_apr > 0, "Amount cann't be zero");
+    aprPrestige = _apr;
   }
 
-  function setARPDI(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
-    arpDI = _arp;
+  function setARPDI(uint256 _apr) external onlyOwner {
+    require(_apr > 0, "Amount cann't be zero");
+    aprDI = _apr;
   }
 
   function setMinPeriodPool1(uint256 _minStakingPeriod) external onlyOwner {
@@ -146,13 +146,53 @@ contract iAIPool is ReentrancyGuard, Ownable {
   }
 
   function pool1(uint256 _amount) public {
-    require(_amount >= 1, "Amount can't be zero");
-    require(iAI.balanceOf(msg.sender) >= tokenThresholdPool1, 'Insufficient $TRUTH balance');
-
+    require(_amount >= tokenThresholdPool1, "Amount can't be zero");
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdPool1, 'Insufficient $iAI balance');
+    string memory poolType = 'Pool 1';
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolingBalance[msg.sender] += _amount;
-    pools[msg.sender].push(Pool(_amount, block.timestamp, 'Pool1'));
-    emit Staked(msg.sender, _amount, 'Pool1');
+    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    emit Staked(msg.sender, _amount, poolType);
+  }
+
+  function pool2(uint256 _amount) public {
+    require(_amount >= tokenThresholdPool2, "Amount can't be zero");
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdPool2, 'Insufficient $iAI balance');
+    string memory poolType = 'Pool 2';
+    iAI.transferFrom(msg.sender, address(this), _amount);
+    poolingBalance[msg.sender] += _amount;
+    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    emit Staked(msg.sender, _amount, poolType);
+  }
+
+  function pool3(uint256 _amount) public {
+    require(_amount >= tokenThresholdPool3, "Amount can't be zero");
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdPool3, 'Insufficient $iAI balance');
+    string memory poolType = 'Pool 3';
+    iAI.transferFrom(msg.sender, address(this), _amount);
+    poolingBalance[msg.sender] += _amount;
+    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    emit Staked(msg.sender, _amount, poolType);
+  }
+
+  function poolPrestige(uint256 _amount) public {
+    require(_amount >= tokenThresholdPrestige, "Amount can't be zero");
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdPrestige, 'Insufficient $iAI balance');
+    string memory poolType = 'Pool Prestige';
+    iAI.transferFrom(msg.sender, address(this), _amount);
+    poolingBalance[msg.sender] += _amount;
+    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    emit Staked(msg.sender, _amount, poolType);
+  }
+
+  function poolDI(uint256 _amount) public {
+    require(_amount >= tokenThresholdDI, "Amount can't be zero");
+    require(iAI.balanceOf(msg.sender) >= tokenThresholdDI, 'Insufficient $iAI balance');
+    string memory poolType = 'Pool Destination Inheritance';
+    iAI.transferFrom(msg.sender, address(this), _amount);
+    poolingBalance[msg.sender] += _amount;
+    pools[msg.sender].push(Pool(_amount, block.timestamp, poolType));
+    emit Staked(msg.sender, _amount, poolType);
   }
 
   function unstake(uint256 _index) public nonReentrant {
@@ -204,7 +244,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
-    uint256 reward = (totalStaked * (arp1 / 365) * (timeElapsed / 1 days)) / 100;
+    uint256 reward = (totalStaked * (apr1 / 365) * (timeElapsed / 1 days)) / 100;
     require(reward > 0, 'Not Eligible for reward');
     lastClaimTime[msg.sender] = block.timestamp;
     iAI.transfer(msg.sender, reward);
