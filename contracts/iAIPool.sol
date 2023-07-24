@@ -25,7 +25,13 @@ contract iAIPool is ReentrancyGuard, Ownable {
   uint256 public arp3 = 550;
   uint256 public arpPrestige = 1000;
   uint256 public arpDI = 1200;
-  uint256 public minStakingPeriod = 30 days;
+
+  uint256 public minPeriodPool1 = 182 days;
+  uint256 public minPeriodPool2 = 182 days;
+  uint256 public minPeriodPool3 = 182 days;
+  uint256 public minPeriodPrestige = 365 days;
+  uint256 public minPeriodDI = 365 days;
+
   uint256 public withdrawPenalty = 25;
 
   mapping(address => Stake[]) private stakes;
@@ -66,9 +72,29 @@ contract iAIPool is ReentrancyGuard, Ownable {
     arpDI = _arp;
   }
 
-  function setMinStakingPeriod(uint256 _minStakingPeriod) external onlyOwner {
+  function setMinPeriodPool1(uint256 _minStakingPeriod) external onlyOwner {
     require(_minStakingPeriod > 0, "Amount cann't be zero");
-    minStakingPeriod = _minStakingPeriod;
+    minPeriodPool1 = _minStakingPeriod;
+  }
+
+  function setMinPeriodPool2(uint256 _minStakingPeriod) external onlyOwner {
+    require(_minStakingPeriod > 0, "Amount cann't be zero");
+    minPeriodPool2 = _minStakingPeriod;
+  }
+
+  function setMinPeriodPool3(uint256 _minStakingPeriod) external onlyOwner {
+    require(_minStakingPeriod > 0, "Amount cann't be zero");
+    minPeriodPool3 = _minStakingPeriod;
+  }
+
+  function setMinPeriodPrestige(uint256 _minStakingPeriod) external onlyOwner {
+    require(_minStakingPeriod > 0, "Amount cann't be zero");
+    minPeriodPrestige = _minStakingPeriod;
+  }
+
+  function setMinPeriodDI(uint256 _minStakingPeriod) external onlyOwner {
+    require(_minStakingPeriod > 0, "Amount cann't be zero");
+    minPeriodDI = _minStakingPeriod;
   }
 
   function setWithdrawPenalty(uint256 _withdrawPenalty) external onlyOwner {
@@ -113,7 +139,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 lastStakeIndex = _index;
     Stake memory lastStake = stakes[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
-    require(timeStaked >= minStakingPeriod, 'Minimum staking period not reached');
+    require(timeStaked >= minPeriodPool1, 'Minimum staking period not reached');
     uint256 latestStake = lastStake.amount;
     uint256 reward = (latestStake * 1) / 10000;
     uint256 payout = latestStake + reward;
@@ -135,7 +161,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     Stake memory lastStake = stakes[msg.sender][lastStakeIndex];
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     uint256 latestStake = lastStake.amount;
-    require(timeStaked <= minStakingPeriod, 'Withdraw with penalty time exceed you can now unstake token ');
+    require(timeStaked <= minPeriodPool1, 'Withdraw with penalty time exceed you can now unstake token ');
     uint256 penalty = (latestStake * withdrawPenalty) / 100;
     // Remove the stake at the given index
     for (uint256 i = _index; i < stakes[msg.sender].length - 1; i++) {
