@@ -20,7 +20,11 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 timestamp;
   }
 
-  uint256 public arp = 750;
+  uint256 public arp1 = 200;
+  uint256 public arp2 = 200;
+  uint256 public arp3 = 550;
+  uint256 public arpPrestige = 1000;
+  uint256 public arpDI = 1200;
   uint256 public minStakingPeriod = 30 days;
   uint256 public withdrawPenalty = 25;
 
@@ -37,9 +41,29 @@ contract iAIPool is ReentrancyGuard, Ownable {
     i9022 = IiAI(truthTokenAddress);
   }
 
-  function setARP(uint256 _arp) external onlyOwner {
+  function setARP1(uint256 _arp) external onlyOwner {
     require(_arp > 0, "Amount cann't be zero");
-    arp = _arp;
+    arp1 = _arp;
+  }
+
+  function setARP2(uint256 _arp) external onlyOwner {
+    require(_arp > 0, "Amount cann't be zero");
+    arp2 = _arp;
+  }
+
+  function setARP3(uint256 _arp) external onlyOwner {
+    require(_arp > 0, "Amount cann't be zero");
+    arp3 = _arp;
+  }
+
+  function setARPPrestige(uint256 _arp) external onlyOwner {
+    require(_arp > 0, "Amount cann't be zero");
+    arpPrestige = _arp;
+  }
+
+  function setARPDI(uint256 _arp) external onlyOwner {
+    require(_arp > 0, "Amount cann't be zero");
+    arpDI = _arp;
   }
 
   function setMinStakingPeriod(uint256 _minStakingPeriod) external onlyOwner {
@@ -91,7 +115,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     require(timeStaked >= minStakingPeriod, 'Minimum staking period not reached');
     uint256 latestStake = lastStake.amount;
-    uint256 reward = (latestStake * arp) / 10000;
+    uint256 reward = (latestStake * 1) / 10000;
     uint256 payout = latestStake + reward;
     // Remove the stake at the given index
     for (uint256 i = _index; i < stakes[msg.sender].length - 1; i++) {
@@ -131,7 +155,7 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
-    uint256 reward = (totalStaked * (arp / 365) * (timeElapsed / 1 days)) / 100;
+    uint256 reward = (totalStaked * (arp1 / 365) * (timeElapsed / 1 days)) / 100;
     require(reward > 0, 'Not Eligible for reward');
     lastClaimTime[msg.sender] = block.timestamp;
     i9022.transfer(msg.sender, reward);
