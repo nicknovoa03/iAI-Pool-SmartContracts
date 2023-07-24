@@ -20,6 +20,18 @@ contract iAIPool is ReentrancyGuard, Ownable {
     uint256 timestamp;
   }
 
+  uint256 public tokenThresholdPool1 = 10000;
+  uint256 public tokenThresholdPool2 = 30000;
+  uint256 public tokenThresholdPool3 = 100000;
+  uint256 public tokenThresholdPrestige = 200000;
+  uint256 public tokenThresholdDI = 300000;
+
+  uint256 public nftThresholdPool1 = 1;
+  uint256 public nftThresholdPool2 = 2;
+  uint256 public nftThresholdPool3 = 3;
+  uint256 public nftThresholdPrestige = 1;
+  uint256 public nftThresholdDI = 1;
+
   uint256 public arp1 = 200;
   uint256 public arp2 = 200;
   uint256 public arp3 = 550;
