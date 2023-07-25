@@ -6,10 +6,10 @@ import './IPool.sol';
 contract iAIPool2 is IPool {
   constructor(address iAITokenAddress, address nftTokenAddress) IPool(iAITokenAddress, nftTokenAddress) {
     poolType = 'Pool 2';
-    arp = 400;
+    apr = 400;
     withdrawPenalty = 25;
-    nftThresholdPool = 2;
-    tokenThresholdPool = 30000;
+    nftThreshold = 2;
+    tokenThreshold = 30000;
     minPoolPeriod = 182 days;
   }
 
@@ -19,7 +19,7 @@ contract iAIPool2 is IPool {
 
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolBalance[msg.sender] += _amount;
-    poolData[msg.sender].push(Pool(_amount, arp, block.timestamp, poolType));
+    poolData[msg.sender].push(Pool(_amount, apr, block.timestamp, poolType));
     emit Pooled(msg.sender, _amount);
   }
 
@@ -32,7 +32,7 @@ contract iAIPool2 is IPool {
     uint256 timeStaked = block.timestamp - lastStake.timestamp;
     require(timeStaked >= minPoolPeriod, 'Minimum pooling period not reached');
     uint256 latestStake = lastStake.amount;
-    uint256 reward = (latestStake * arp) / 10000;
+    uint256 reward = (latestStake * apr) / 10000;
     uint256 payout = latestStake + reward;
     // Remove the stake at the given index
     for (uint256 i = _index; i < poolData[msg.sender].length - 1; i++) {
@@ -72,7 +72,7 @@ contract iAIPool2 is IPool {
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
-    uint256 reward = (totalStaked * (arp / 365) * (timeElapsed / 1 days)) / 100;
+    uint256 reward = (totalStaked * (apr / 365) * (timeElapsed / 1 days)) / 100;
     require(reward > 0, 'Not Eligible for reward');
     lastClaimTime[msg.sender] = block.timestamp;
     iAI.transfer(msg.sender, reward);

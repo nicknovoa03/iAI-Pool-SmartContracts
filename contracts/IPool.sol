@@ -28,10 +28,10 @@ contract IPool is ReentrancyGuard, Ownable {
   }
 
   string public poolType;
-  uint256 public arp;
+  uint256 public apr;
   uint256 public withdrawPenalty;
-  uint256 public nftThresholdPool;
-  uint256 public tokenThresholdPool;
+  uint256 public nftThreshold;
+  uint256 public tokenThreshold;
   uint256 public minPoolPeriod;
 
   mapping(address => Pool[]) internal poolData;
@@ -55,7 +55,7 @@ contract IPool is ReentrancyGuard, Ownable {
 
   function setARP(uint256 _arp) external onlyOwner {
     require(_arp > 0, "Amount cann't be zero");
-    arp = _arp;
+    apr = _arp;
   }
 
   function setMinPoolingPeriod(uint256 _minstakingPeriod) external onlyOwner {
