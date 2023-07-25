@@ -14,6 +14,8 @@ interface IiAI {
 
 interface I9022 {
   function balanceOf(address account) external view returns (uint256);
+
+  function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256 tokenId);
 }
 
 contract IPool is ReentrancyGuard, Ownable {
@@ -84,7 +86,7 @@ contract IPool is ReentrancyGuard, Ownable {
     return poolData[_staker];
   }
 
-  function widthdrawIAI(address _address, uint256 _amount) public onlyOwner {
+  function widthdrawIAI(address _address, uint256 _amount) external onlyOwner {
     iAI.transfer(_address, _amount);
   }
 
@@ -100,5 +102,16 @@ contract IPool is ReentrancyGuard, Ownable {
 
   function setNftToken(address _tokenAddress) external onlyOwner {
     nft9022 = I9022(_tokenAddress);
+  }
+
+  function getUserTokens(address _address) public view returns (uint256[] memory) {
+    uint256 totalTokens = nft9022.balanceOf(_address);
+    uint256[] memory tokenIds = new uint256[](totalTokens);
+
+    for (uint256 i = 0; i < totalTokens; i++) {
+      tokenIds[i] = nft9022.tokenOfOwnerByIndex(_address, i);
+    }
+
+    return tokenIds;
   }
 }
