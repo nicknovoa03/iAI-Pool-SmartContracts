@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 import './IPool.sol';
 
 contract iAIPoolPrestige is IPool {
+  mapping(uint256 => bool) public prestigeIds;
+
   constructor(address iAITokenAddress, address nftTokenAddress) IPool(iAITokenAddress, nftTokenAddress) {
     poolType = 'Pool Prestige';
     apr = 1000;
@@ -13,7 +15,29 @@ contract iAIPoolPrestige is IPool {
     minPoolPeriod = 365 days;
   }
 
-  function pool1(uint256 _amount) public payable {
+  function setPrestigeIds(uint256[] memory keys, bool[] memory values) external onlyOwner {
+    require(keys.length == values.length, 'Arrays length mismatch');
+
+    for (uint256 i = 0; i < keys.length; i++) {
+      prestigeIds[keys[i]] = values[i];
+    }
+  }
+
+  function determinePrestige(address _address) internal view returns (bool) {
+    uint256 totalTokens = nft9022.balanceOf(_address);
+    uint256 tokenId;
+
+    for (uint256 i = 0; i < totalTokens; i++) {
+      tokenId = nft9022.tokenOfOwnerByIndex(_address, i);
+      if (prestigeIds[tokenId]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function poolPrestige(uint256 _amount) external payable {
+    require(determinePrestige(msg.sender), 'Wallet does not own any Prestige 9022 NFTs');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
 
@@ -23,7 +47,7 @@ contract iAIPoolPrestige is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpoolPrestige(uint256 _index) public nonReentrant {
+  function unpoolPrestige(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -45,7 +69,7 @@ contract iAIPoolPrestige is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawPoolPrestige(uint256 _index) public nonReentrant {
+  function withdrawPoolPrestige(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -66,7 +90,7 @@ contract iAIPoolPrestige is IPool {
     emit Penalty(msg.sender, payout);
   }
 
-  function claimRewardPoolPrestige() public nonReentrant {
+  function claimRewardPoolPrestige() external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
