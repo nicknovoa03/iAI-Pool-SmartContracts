@@ -15,7 +15,7 @@ contract iAIPool2 is IPool {
     minPoolPeriod = 182 days;
   }
 
-  function pool3(uint256 _amount) public payable {
+  function pool3(uint256 _amount) external payable {
     require(poolData[msg.sender].length < 2, 'Already active position in Pool 3');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
@@ -33,7 +33,7 @@ contract iAIPool2 is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpool3(uint256 _index) public nonReentrant {
+  function unpool3(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -55,7 +55,7 @@ contract iAIPool2 is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawPool3(uint256 _index) public nonReentrant {
+  function withdrawPool3(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -76,7 +76,7 @@ contract iAIPool2 is IPool {
     emit Penalty(msg.sender, payout);
   }
 
-  function claimRewardPool3() public nonReentrant {
+  function claimRewardPool3() external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
