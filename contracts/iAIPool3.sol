@@ -15,7 +15,7 @@ contract iAIPool2 is IPool {
     minPoolPeriod = 182 days;
   }
 
-  function pool3(uint256 _amount) public {
+  function pool3(uint256 _amount) public payable {
     require(poolData[msg.sender].length < 2, 'Already active position in Pool 3');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');

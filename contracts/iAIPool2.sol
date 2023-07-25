@@ -13,7 +13,7 @@ contract iAIPool2 is IPool {
     minPoolPeriod = 182 days;
   }
 
-  function pool2(uint256 _amount) public {
+  function pool2(uint256 _amount) public payable {
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
 
@@ -72,6 +72,7 @@ contract iAIPool2 is IPool {
     uint256 lastClaim = lastClaimTime[msg.sender];
     uint256 timeElapsed = block.timestamp - lastClaim;
     require(timeElapsed > 0, 'No rewards to claim');
+    // Calculate the reward
     uint256 reward = (totalStaked * (apr / 365) * (timeElapsed / 1 days)) / 100;
     require(reward > 0, 'Not Eligible for reward');
     lastClaimTime[msg.sender] = block.timestamp;
