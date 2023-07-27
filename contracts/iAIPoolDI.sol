@@ -10,7 +10,7 @@ contract iAIPoolDI is IPool {
     poolType = 'Pool Destination Inheritance';
     apr = 1200;
     nftThreshold = 1;
-    tokenThreshold = 300000;
+    tokenThreshold = 300000 ether;
     minPoolPeriod = 365 days;
   }
 
@@ -49,6 +49,7 @@ contract iAIPoolDI is IPool {
   }
 
   function unpool(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -70,6 +71,7 @@ contract iAIPoolDI is IPool {
   }
 
   function withdrawFunds(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -91,6 +93,7 @@ contract iAIPoolDI is IPool {
   }
 
   function claimReward() external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];

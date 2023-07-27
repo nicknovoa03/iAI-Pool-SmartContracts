@@ -11,7 +11,7 @@ contract iAIPoolPrestige is IPool {
     apr = 1000;
     withdrawPenalty = 25;
     nftThreshold = 1;
-    tokenThreshold = 200000;
+    tokenThreshold = 200000 ether;
     minPoolPeriod = 365 days;
   }
 
@@ -50,6 +50,7 @@ contract iAIPoolPrestige is IPool {
   }
 
   function unpool(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -72,6 +73,7 @@ contract iAIPoolPrestige is IPool {
   }
 
   function withdrawFunds(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -93,6 +95,7 @@ contract iAIPoolPrestige is IPool {
   }
 
   function claimReward() external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];

@@ -10,13 +10,13 @@ contract iAIPool3 is IPool {
     poolType = 'Pool 3';
     apr = 550;
     nftThreshold = 3;
-    tokenThreshold = 100000;
+    tokenThreshold = 100000 ether;
     minPoolPeriod = 182 days;
   }
 
   function pool(uint256 _amount) external payable {
     require(poolActive, 'Pool is not currently active');
-    require(poolData[msg.sender].length < 2, 'Only 1 postion allowed for pool 3');
+    require(poolData[msg.sender].length == 0, 'Only 1 position allowed for pool 3');
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
     require(_amount >= tokenThreshold, '$iAI threshold not met');
     require(nft9022.balanceOf(msg.sender) >= nftThreshold, '9022 threshold not met');
@@ -35,6 +35,7 @@ contract iAIPool3 is IPool {
   }
 
   function unpool(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -57,6 +58,7 @@ contract iAIPool3 is IPool {
   }
 
   function withdrawFunds(uint256 _index) external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -78,6 +80,7 @@ contract iAIPool3 is IPool {
   }
 
   function claimReward() external nonReentrant {
+    require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
