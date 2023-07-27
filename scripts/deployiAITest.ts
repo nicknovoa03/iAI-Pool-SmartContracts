@@ -2,11 +2,8 @@ import { ethers } from "hardhat";
 
 async function main() {
 
-
-  const tokenAddress = '0x6dDe4fFD6dB302Bc9a46850f61399e082f6c2122';
-  const nftAddress = '0x853806fCa5Ee8a6Ac99Dc84a8e3596A4F6541796';
-  const iAIPool = await ethers.getContractFactory("iAIPool1");
-  const contract = await iAIPool.deploy(tokenAddress, nftAddress);
+  const iAITest = await ethers.getContractFactory("IAITest");
+  const contract = await iAITest.deploy();
 
   await contract.deployed();
 
