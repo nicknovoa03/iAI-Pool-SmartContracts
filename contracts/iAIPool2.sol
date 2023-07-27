@@ -24,7 +24,7 @@ contract iAIPool2 is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpool(uint256 _index) external nonReentrant {
+  function unPool(uint256 _index) external nonReentrant {
     require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
@@ -47,7 +47,7 @@ contract iAIPool2 is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawFunds(uint256 _index) external nonReentrant {
+  function withdrawPosition(uint256 _index) external nonReentrant {
     require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');

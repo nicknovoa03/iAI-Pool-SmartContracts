@@ -93,11 +93,11 @@ contract IPool is ReentrancyGuard, Ownable {
     withdrawPenalty = _withdrawPenalty;
   }
 
-  function poolingBalance(address _staker) public view returns (uint256) {
+  function poolPostions(address _staker) public view returns (uint256) {
     return poolBalance[_staker];
   }
 
-  function poolerDetails(address _staker, uint256 _index) public view returns (Pool memory) {
+  function poolPostionDetails(address _staker, uint256 _index) public view returns (Pool memory) {
     return poolData[_staker][_index];
   }
 

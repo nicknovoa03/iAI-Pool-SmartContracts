@@ -17,14 +17,13 @@ contract iAIPool1 is IPool {
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
     require(_amount >= tokenThreshold, '$iAI threshold not met');
     require(nft9022.balanceOf(msg.sender) >= nftThreshold, '9022 threshold not met');
-
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolBalance[msg.sender] += _amount;
     poolData[msg.sender].push(Pool(_amount, apr, block.timestamp, poolType));
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpool(uint256 _index) external nonReentrant {
+  function unPool(uint256 _index) external nonReentrant {
     require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
@@ -47,7 +46,7 @@ contract iAIPool1 is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawFunds(uint256 _index) external nonReentrant {
+  function withdrawPosition(uint256 _index) external nonReentrant {
     require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
