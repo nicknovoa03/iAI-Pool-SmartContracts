@@ -36,7 +36,8 @@ contract iAIPoolPrestige is IPool {
     return false;
   }
 
-  function poolPrestige(uint256 _amount) external payable {
+  function pool(uint256 _amount) external payable {
+    require(poolActive, 'Pool is not currently active');
     require(determinePrestige(msg.sender), 'Wallet does not own any Prestige 9022 NFTs');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
@@ -47,7 +48,7 @@ contract iAIPoolPrestige is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpoolPrestige(uint256 _index) external nonReentrant {
+  function unpool(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -69,7 +70,7 @@ contract iAIPoolPrestige is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawPoolPrestige(uint256 _index) external nonReentrant {
+  function withdraw(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -90,7 +91,7 @@ contract iAIPoolPrestige is IPool {
     emit Penalty(msg.sender, payout);
   }
 
-  function claimRewardPoolPrestige() external nonReentrant {
+  function claimReward() external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];

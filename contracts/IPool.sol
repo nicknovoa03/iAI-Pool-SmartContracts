@@ -31,10 +31,11 @@ contract IPool is ReentrancyGuard, Ownable {
 
   string public poolType;
   uint256 public apr;
-  uint256 public withdrawPenalty;
   uint256 public nftThreshold;
   uint256 public tokenThreshold;
   uint256 public minPoolPeriod;
+  uint256 public withdrawPenalty = 25;
+  bool public poolActive = true;
 
   mapping(address => Pool[]) internal poolData;
   mapping(address => uint256) internal poolBalance;
@@ -55,8 +56,30 @@ contract IPool is ReentrancyGuard, Ownable {
     emit Received(msg.sender, msg.value);
   }
 
+  function setPoolState() external onlyOwner {
+    poolActive = !poolActive;
+  }
+
+  function setIAIToken(address _tokenAddress) external onlyOwner {
+    iAI = IiAI(_tokenAddress);
+  }
+
+  function setNftToken(address _tokenAddress) external onlyOwner {
+    nft9022 = I9022(_tokenAddress);
+  }
+
+  function setTokenThreshold(uint256 _amount) external onlyOwner {
+    require(_amount > 0, 'Amount can not be 0');
+    tokenThreshold = _amount;
+  }
+
+  function setNftThreshold(uint256 _amount) external onlyOwner {
+    require(_amount > 0, 'Amount can not be 0');
+    nftThreshold = _amount;
+  }
+
   function setARP(uint256 _arp) external onlyOwner {
-    require(_arp > 0, "Amount cann't be zero");
+    require(_arp > 0, 'Amount can not be zero');
     apr = _arp;
   }
 
@@ -94,14 +117,6 @@ contract IPool is ReentrancyGuard, Ownable {
     uint256 balance = address(this).balance;
     require(balance > 0, 'Amount is too high');
     payable(_address).transfer(balance);
-  }
-
-  function setIAIToken(address _tokenAddress) external onlyOwner {
-    iAI = IiAI(_tokenAddress);
-  }
-
-  function setNftToken(address _tokenAddress) external onlyOwner {
-    nft9022 = I9022(_tokenAddress);
   }
 
   function getUserTokens(address _address) public view returns (uint256[] memory) {

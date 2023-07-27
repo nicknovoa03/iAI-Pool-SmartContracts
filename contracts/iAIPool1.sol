@@ -3,17 +3,17 @@ pragma solidity ^0.8.4;
 
 import './IPool.sol';
 
-contract iAIPool1 is IPool {
+contract iAIPool is IPool {
   constructor(address iAITokenAddress, address nftTokenAddress) IPool(iAITokenAddress, nftTokenAddress) {
     poolType = 'Pool 1';
     apr = 200;
-    withdrawPenalty = 25;
     nftThreshold = 1;
     tokenThreshold = 10000;
     minPoolPeriod = 182 days;
   }
 
-  function pool1(uint256 _amount) external payable {
+  function pool(uint256 _amount) external payable {
+    require(poolActive, 'Pool is not currently active');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
 
@@ -23,7 +23,7 @@ contract iAIPool1 is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpool1(uint256 _index) external nonReentrant {
+  function unpool(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     // uint256 totalStaked = poolingBalance[msg.sender];
@@ -45,7 +45,7 @@ contract iAIPool1 is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawPool1(uint256 _index) external nonReentrant {
+  function withdraw(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -66,7 +66,7 @@ contract iAIPool1 is IPool {
     emit Penalty(msg.sender, payout);
   }
 
-  function claimRewardPool1() external nonReentrant {
+  function claimReward() external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];

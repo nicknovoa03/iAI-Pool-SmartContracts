@@ -4,22 +4,21 @@ pragma solidity ^0.8.4;
 import './IPool.sol';
 
 contract iAIPoolDI is IPool {
-  mapping(uint256 => bool) public DIIds;
+  mapping(uint256 => bool) public DiIds;
 
   constructor(address iAITokenAddress, address nftTokenAddress) IPool(iAITokenAddress, nftTokenAddress) {
     poolType = 'Pool Destination Inheritance';
     apr = 1200;
-    withdrawPenalty = 25;
     nftThreshold = 1;
     tokenThreshold = 300000;
     minPoolPeriod = 365 days;
   }
 
-  function setDIIds(uint256[] memory keys, bool[] memory values) external onlyOwner {
+  function setDiIds(uint256[] memory keys, bool[] memory values) external onlyOwner {
     require(keys.length == values.length, 'Arrays length mismatch');
 
     for (uint256 i = 0; i < keys.length; i++) {
-      DIIds[keys[i]] = values[i];
+      DiIds[keys[i]] = values[i];
     }
   }
 
@@ -29,14 +28,15 @@ contract iAIPoolDI is IPool {
 
     for (uint256 i = 0; i < totalTokens; i++) {
       tokenId = nft9022.tokenOfOwnerByIndex(_address, i);
-      if (DIIds[tokenId]) {
+      if (DiIds[tokenId]) {
         return true;
       }
     }
     return false;
   }
 
-  function poolDI(uint256 _amount) external payable {
+  function pool(uint256 _amount) external payable {
+    require(poolActive, 'Pool is not currently active');
     require(determineDI(msg.sender), 'Wallet does not own any Destination Inheritance 9022 NFTs');
     require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
@@ -47,7 +47,7 @@ contract iAIPoolDI is IPool {
     emit Pooled(msg.sender, _amount);
   }
 
-  function unpoolDI(uint256 _index) external nonReentrant {
+  function unpool(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -68,7 +68,7 @@ contract iAIPoolDI is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdrawPoolDI(uint256 _index) external nonReentrant {
+  function withdraw(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
@@ -89,7 +89,7 @@ contract iAIPoolDI is IPool {
     emit Penalty(msg.sender, payout);
   }
 
-  function claimRewardPoolDI() external nonReentrant {
+  function claimReward() external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     uint256 totalStaked = poolBalance[msg.sender];
     uint256 lastClaim = lastClaimTime[msg.sender];
