@@ -39,8 +39,9 @@ contract iAIPoolPrestige is IPool {
   function pool(uint256 _amount) external payable {
     require(poolActive, 'Pool is not currently active');
     require(determinePrestige(msg.sender), 'Wallet does not own any Prestige 9022 NFTs');
-    require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
+    require(_amount >= tokenThreshold, '$iAI threshold not met');
+    require(nft9022.balanceOf(msg.sender) >= nftThreshold, '9022 threshold not met');
 
     iAI.transferFrom(msg.sender, address(this), _amount);
     poolBalance[msg.sender] += _amount;
@@ -70,7 +71,7 @@ contract iAIPoolPrestige is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdraw(uint256 _index) external nonReentrant {
+  function withdrawFunds(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;

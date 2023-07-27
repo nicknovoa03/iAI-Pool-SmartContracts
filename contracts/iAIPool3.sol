@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import './IPool.sol';
 
-contract iAIPool2 is IPool {
+contract iAIPool3 is IPool {
   mapping(address => uint256) public dynamicAprs;
 
   constructor(address iAITokenAddress, address nftTokenAddress) IPool(iAITokenAddress, nftTokenAddress) {
@@ -17,8 +17,9 @@ contract iAIPool2 is IPool {
   function pool(uint256 _amount) external payable {
     require(poolActive, 'Pool is not currently active');
     require(poolData[msg.sender].length < 2, 'Only 1 postion allowed for pool 3');
-    require(_amount >= 1, "Amount can't be zero");
     require(iAI.balanceOf(msg.sender) >= _amount, 'Insufficient $iAI balance');
+    require(_amount >= tokenThreshold, '$iAI threshold not met');
+    require(nft9022.balanceOf(msg.sender) >= nftThreshold, '9022 threshold not met');
 
     // Calculate the apr determined by how many 9022 you have
     uint256 nftCount = nft9022.balanceOf(msg.sender);
@@ -55,7 +56,7 @@ contract iAIPool2 is IPool {
     emit Unpooled(msg.sender, payout, timeStaked);
   }
 
-  function withdraw(uint256 _index) external nonReentrant {
+  function withdrawFunds(uint256 _index) external nonReentrant {
     require(poolData[msg.sender].length > 0, 'No stakes found for the address');
     require(poolData[msg.sender].length >= _index + 1, 'Stake does not exist');
     uint256 lastStakeIndex = _index;
